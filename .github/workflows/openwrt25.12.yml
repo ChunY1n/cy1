@@ -49,7 +49,7 @@ jobs:
   build:
     needs: check-update
     if: needs.check-update.outputs.should_build == 'true'
-    runs-on: self-hosted
+    runs-on: ubuntu-22.04
     timeout-minutes: 300
     steps:
       - name: 释放磁盘空间
@@ -112,23 +112,15 @@ jobs:
             fi
           done
 
-          # 3) image/armv8.mk 是完整文件覆盖（官方文件 + 追加 kmod-r8168），不是 diff，
-          #    直接复制不存在 hunk 失败的风险
-          cp "$PATCHES/target/linux/rockchip/image/armv8.mk" target/linux/rockchip/image/armv8.mk
+          # 注意：不再触碰 target/linux/rockchip/image/armv8.mk。
+          # 补丁源仓库对这个文件的修改只是把 R4S 网卡驱动从 kmod-r8169 换成
+          # kmod-r8168（纯偏好，跟 1G 启动问题无关），但它是整文件覆盖，
+          # 之前两次失败都是因为这个覆盖顺带带进了其他无关设备（rk3328-roc-cc）
+          # 已经过时、对不上当前官方源码的内容。保留官方原版文件最稳妥。
 
           echo "补丁应用完成，列出关键文件确认："
           ls package/boot/uboot-rockchip/patches/ | grep -E "30[0-9]|31[0]"
           ls "$KDIR" | grep -E "103-|402-1|501-"
-
-      # ========== 新增修复步骤 ==========
-      - name: 注释掉不需要的 rk3328-roc-cc 设备树（R4S 构建无需此设备）
-        working-directory: openwrt
-        run: |
-          # 精确匹配并注释掉该行，防止因缺失 DTS 导致编译失败
-          sed -i 's/^IMAGE_DTS += rk3328-roc-cc/#IMAGE_DTS += rk3328-roc-cc/' \
-            target/linux/rockchip/image/armv8.mk
-          echo "已跳过 rk3328-roc-cc 设备树编译"
-      # =================================
 
       - name: 更新并安装 feeds
         working-directory: openwrt
