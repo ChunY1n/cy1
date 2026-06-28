@@ -19,7 +19,7 @@ permissions:
 
 jobs:
   check-update:
-    runs-on: Windows
+    runs-on: ubuntu-22.04
     outputs:
       should_build: ${{ steps.check.outputs.should_build }}
       openwrt_sha: ${{ steps.check.outputs.openwrt_sha }}
