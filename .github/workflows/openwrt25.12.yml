@@ -120,6 +120,16 @@ jobs:
           ls package/boot/uboot-rockchip/patches/ | grep -E "30[0-9]|31[0]"
           ls "$KDIR" | grep -E "103-|402-1|501-"
 
+      # ========== 新增修复步骤 ==========
+      - name: 注释掉不需要的 rk3328-roc-cc 设备树（R4S 构建无需此设备）
+        working-directory: openwrt
+        run: |
+          # 精确匹配并注释掉该行，防止因缺失 DTS 导致编译失败
+          sed -i 's/^IMAGE_DTS += rk3328-roc-cc/#IMAGE_DTS += rk3328-roc-cc/' \
+            target/linux/rockchip/image/armv8.mk
+          echo "已跳过 rk3328-roc-cc 设备树编译"
+      # =================================
+
       - name: 更新并安装 feeds
         working-directory: openwrt
         run: |
